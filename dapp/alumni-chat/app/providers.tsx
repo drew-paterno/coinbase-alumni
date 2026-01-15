@@ -7,13 +7,21 @@ import { ReactNode } from "react";
 import { MiniAppIndicator } from "./providers/miniAppIndicator";
 import { MiniAppProvider } from "./providers/miniAppProvider";
 import { WagmiProvider, createConfig, http } from 'wagmi';
+import { coinbaseWallet } from 'wagmi/connectors';
 
 const queryClient = new QueryClient();
 
 const wagmiConfig = createConfig({
   chains: [baseSepolia],
+  connectors: [
+    coinbaseWallet({
+      appName: 'Alumni Chat',
+      preference: 'smartWalletOnly',
+    }),
+  ],
   transports: {
-    [baseSepolia.id]: http(),
+    // Use Coinbase's public RPC for better reliability
+    [baseSepolia.id]: http('https://sepolia.base.org'),
   },
 });
 

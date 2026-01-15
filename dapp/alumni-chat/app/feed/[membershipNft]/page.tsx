@@ -295,7 +295,10 @@ function CreatePostModal({ onClose, membershipNft, onPostCreated }: CreatePostMo
   const { data: hash, writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
 
   // Wait for transaction confirmation
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+    pollingInterval: 1000, // Poll every 1 second for faster updates
+  });
 
   // Handle successful transaction confirmation
   useEffect(() => {
@@ -354,6 +357,7 @@ function CreatePostModal({ onClose, membershipNft, onPostCreated }: CreatePostMo
         address: gatedSocialEscrowAddress,
         functionName: 'createPost',
         args: [cid, membershipNft],
+        gas: BigInt(200000), // Explicit gas limit to speed up estimation
       });
     } catch (err) {
       console.error('Failed to upload:', err);
