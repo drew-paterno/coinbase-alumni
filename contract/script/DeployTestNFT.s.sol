@@ -15,15 +15,16 @@ contract DeployTestNFT is Script {
 
         // Deploy the test NFT
         TestMembershipNFT nft = new TestMembershipNFT(
-            "Coinbase Alumni Membership",
+            "Kohl's Alumni",
             "https://example.com/metadata/{id}.json"
         );
 
         console.log("TestMembershipNFT deployed at:", address(nft));
 
         // Mint token ID 1 to the deployer (yourself)
-        nft.mint(msg.sender, 1, 1);
-        console.log("Minted token ID 1 to:", msg.sender);
+        nft.mint(address(0x12eAC257a267BA0B70360b114cf9c1154Bf139D4), 1, 1);
+        nft.mint(address(0x078AD59A7497820531936055b4a90A3aa2dA69EA), 1, 1);
+        console.log("Minted token ID 1 to:", address(0x12eAC257a267BA0B70360b114cf9c1154Bf139D4), address(0x078AD59A7497820531936055b4a90A3aa2dA69EA));
 
         vm.stopBroadcast();
     }

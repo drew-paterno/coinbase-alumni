@@ -229,9 +229,8 @@ contract GatedSocialEscrowTest is Test {
         vm.prank(protocolRecipient);
         escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
 
-        // Check membership as author (who has the token)
-        vm.prank(author);
-        bool isMember = escrow.isMember(address(mockNft));
+        // Check membership for author (who has the token)
+        bool isMember = escrow.isMember(address(mockNft), author);
         assertTrue(isMember);
     }
 
@@ -240,16 +239,14 @@ contract GatedSocialEscrowTest is Test {
         vm.prank(protocolRecipient);
         escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
 
-        // Check membership as nonMember (who doesn't have the token)
-        vm.prank(nonMember);
-        bool isMember = escrow.isMember(address(mockNft));
+        // Check membership for nonMember (who doesn't have the token)
+        bool isMember = escrow.isMember(address(mockNft), nonMember);
         assertFalse(isMember);
     }
 
     function test_IsMember_ReturnsFalse_WhenGroupNotActive() public {
         // Don't add group - isMember should return false for inactive group
-        vm.prank(author);
-        bool isMember = escrow.isMember(address(mockNft));
+        bool isMember = escrow.isMember(address(mockNft), author);
         assertFalse(isMember);
     }
 
@@ -261,8 +258,7 @@ contract GatedSocialEscrowTest is Test {
         vm.stopPrank();
 
         // Should return false even if user has the token
-        vm.prank(author);
-        bool isMember = escrow.isMember(address(mockNft));
+        bool isMember = escrow.isMember(address(mockNft), author);
         assertFalse(isMember);
     }
 

@@ -115,9 +115,9 @@ contract GatedSocialEscrow {
     }
 
     // -- MEMBERSHIP FUNCTIONS --
-    function isMember(address membershipNft) external view returns (bool) {
+    function isMember(address membershipNft, address user) external view returns (bool) {
         if (!groups[membershipNft].isActive) return false;
-        return IERC1155(membershipNft).balanceOf(msg.sender, groups[membershipNft].tokenId) > 0;
+        return IERC1155(membershipNft).balanceOf(user, groups[membershipNft].tokenId) > 0;
     }
 
     // -- POST FUNCTIONS --
