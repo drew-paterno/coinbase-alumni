@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useReadContract } from 'wagmi';
 import { useAccount } from 'wagmi';
 import {
@@ -10,7 +10,7 @@ import {
   type Post,
 } from '../../lib/GatedSocialEscrow';
 import { formatTimestamp } from '../../lib/utils';
-import { uploadToIPFS, type PostContent } from '../../lib/ipfs';
+import { uploadToIPFS, fetchFromIPFS, type PostContent } from '../../lib/ipfs';
 
 export default function FeedPage() {
   const params = useParams();
@@ -163,18 +163,74 @@ function PostCard({ post, index }: { post: Post; index: number }) {
         </div>
       </div>
 
-      {/* Post Content (CID) */}
-      <div className="bg-gray-50 rounded-lg p-4 mb-3">
-        <p className="text-sm text-gray-600 break-all">
-          <span className="font-medium text-gray-700">CID: </span>
-          {post.cid}
-        </p>
-      </div>
+      {/* Post Content */}
+      <IPFSContent cid={post.cid} />
 
       {/* Post Footer */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-gray-500 mt-3">
         <span>Post #{index + 1}</span>
       </div>
+    </div>
+  );
+}
+
+function IPFSContent({ cid }: { cid: string }) {
+  const [content, setContent] = useState<PostContent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadContent() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await fetchFromIPFS(cid);
+        if (!cancelled) {
+          setContent(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load content');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadContent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cid]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin" />
+          <span className="text-sm text-gray-500">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 rounded-lg p-4">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-4">
+      <p className="text-gray-900 whitespace-pre-wrap">{content?.text}</p>
     </div>
   );
 }
