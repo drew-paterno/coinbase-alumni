@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useReadContract } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useAccount } from 'wagmi';
 import {
   GatedSocialEscrowAbi,
@@ -34,9 +34,6 @@ export default function FeedPage() {
     functionName: 'getPosts',
     args: [membershipNft],
   });
-
-  console.log('drew')
-  console.log(posts)
 
   const isLoading = isLoadingGroup || isLoadingPosts;
 
@@ -244,18 +241,51 @@ interface CreatePostModalProps {
 
 function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: CreatePostModalProps) {
   const [postText, setPostText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [uploadedCid, setUploadedCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>('');
   const { address } = useAccount();
+
+  // Smart contract write hook
+  const { data: hash, writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+
+  // Wait for transaction confirmation
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  // Handle successful transaction confirmation
+  useEffect(() => {
+    if (isConfirmed) {
+      setStatus('Post created successfully!');
+      const timer = setTimeout(() => {
+        setPostText('');
+        setStatus('');
+        setUploadedCid(null);
+        onPostCreated();
+        onClose();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isConfirmed, onPostCreated, onClose]);
+
+  // Handle write errors
+  useEffect(() => {
+    if (writeError) {
+      setError(writeError.message);
+      setStatus('');
+    }
+  }, [writeError]);
+
+  const isProcessing = isUploading || isWritePending || isConfirming;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!postText.trim()) return;
+    if (!postText.trim() || isProcessing) return;
 
-    setIsSubmitting(true);
+    setIsUploading(true);
     setError(null);
     setUploadedCid(null);
+    setStatus('Uploading to IPFS...');
 
     try {
       // Step 1: Upload to IPFS
@@ -267,24 +297,25 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
       };
 
       console.log('Uploading to IPFS:', postContent);
-      const { cid, url } = await uploadToIPFS(postContent);
-      console.log('Uploaded to IPFS:', { cid, url });
+      const { cid } = await uploadToIPFS(postContent);
+      console.log('Uploaded to IPFS:', cid);
 
       setUploadedCid(cid);
+      setIsUploading(false);
+      setStatus('Submitting to blockchain...');
 
-      // TODO: Step 2 - Call smart contract with CID
-      // createPost(cid, membershipNft)
-      console.log('Ready to post to chain with CID:', cid, 'membershipNft:', membershipNft);
-
-      // For now, just close after successful upload
-      setPostText('');
-      onPostCreated();
-      onClose();
+      // Step 2: Call smart contract with CID
+      writeContract({
+        abi: GatedSocialEscrowAbi,
+        address: gatedSocialEscrowAddress,
+        functionName: 'createPost',
+        args: [cid, membershipNft],
+      });
     } catch (err) {
       console.error('Failed to upload:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload post');
-    } finally {
-      setIsSubmitting(false);
+      setStatus('');
+      setIsUploading(false);
     }
   };
 
@@ -344,12 +375,18 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
               </div>
             )}
 
-            {/* Success message (CID uploaded) */}
-            {uploadedCid && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">
-                  Uploaded to IPFS: <span className="font-mono text-xs">{uploadedCid}</span>
+            {/* Status message */}
+            {status && (
+              <div className={`mt-3 p-3 rounded-lg ${isConfirmed ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
+                <p className={`text-sm ${isConfirmed ? 'text-green-700' : 'text-blue-700'} flex items-center gap-2`}>
+                  {!isConfirmed && (
+                    <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                  )}
+                  {status}
                 </p>
+                {uploadedCid && (
+                  <p className="text-xs text-gray-500 mt-1 font-mono">CID: {uploadedCid}</p>
+                )}
               </div>
             )}
           </div>
@@ -365,13 +402,13 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
             </button>
             <button
               type="submit"
-              disabled={!postText.trim() || isSubmitting}
+              disabled={!postText.trim() || isProcessing}
               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center gap-2"
             >
-              {isSubmitting ? (
+              {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Posting...
+                  {isUploading ? 'Uploading...' : isConfirming ? 'Confirming...' : 'Submitting...'}
                 </>
               ) : (
                 'Post'
