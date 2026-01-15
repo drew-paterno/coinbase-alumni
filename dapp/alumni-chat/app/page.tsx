@@ -3,6 +3,7 @@
 import { sdk } from '@farcaster/miniapp-sdk';
 import { useEffect } from 'react';
 import { useReadContract } from 'wagmi';
+import { useRouter } from 'next/navigation';
 import { useMiniApp } from './providers/miniAppProvider';
 import { GatedSocialEscrowAbi, gatedSocialEscrowAddress, type Group } from './lib/GatedSocialEscrow';
 
@@ -101,6 +102,16 @@ export default function Home() {
 }
 
 function GroupCard({ group, index }: { group: Group; index: number }) {
+  const router = useRouter();
+
+  const handleViewClick = () => {
+    debugger
+    if (group.isActive) {
+      // Navigate to feed page with group index
+      router.push(`/feed/${index}`);
+    }
+  };
+
   return (
     <div
       className={`border rounded-xl p-5 transition-all hover:shadow-md ${
@@ -130,6 +141,7 @@ function GroupCard({ group, index }: { group: Group; index: number }) {
           </p>
         </div>
         <button
+          onClick={handleViewClick}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
             group.isActive
               ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
