@@ -11,7 +11,8 @@ export function WalletIndicator() {
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const injectedConnector = connectors.find((connector) => connector.id === 'injected');
+  // Get the first available connector (OnchainKit provides coinbaseWalletSDK, not 'injected')
+  const availableConnector = connectors[0];
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -45,8 +46,9 @@ export function WalletIndicator() {
     return (
       <div className="fixed top-4 left-4 z-50">
         <button
-          onClick={() => injectedConnector && connect({ connector: injectedConnector })}
-          className="px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-2 bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 transition-colors"
+          onClick={() => availableConnector && connect({ connector: availableConnector })}
+          disabled={!availableConnector}
+          className="px-3 py-1.5 rounded-full text-xs font-medium shadow-lg flex items-center gap-2 bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="w-2 h-2 rounded-full bg-gray-400" />
           Connect Wallet
