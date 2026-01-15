@@ -104,6 +104,13 @@ export default function Home() {
 function GroupCard({ group }: { group: Group }) {
   const router = useRouter();
 
+  const { data: postCount, isLoading: isLoadingCount } = useReadContract({
+    abi: GatedSocialEscrowAbi,
+    address: gatedSocialEscrowAddress,
+    functionName: 'getGroupPostCount',
+    args: [group.membershipNft],
+  });
+
   const handleViewClick = () => {
     router.push(`/feed/${group.membershipNft}`);
   };
@@ -115,11 +122,14 @@ function GroupCard({ group }: { group: Group }) {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {group.name || 'Unnamed Group'}
           </h3>
-          <p className="text-sm text-gray-600 font-mono">
-            NFT: {group.membershipNft.slice(0, 6)}...{group.membershipNft.slice(-4)}
-          </p>
+          <p className="text-sm text-gray-600 font-mono">NFT: {group.membershipNft.slice(0, 6)}...{group.membershipNft.slice(-4)}</p>
+          <p className="text-sm text-gray-600">Token ID: {group.tokenId.toString()}</p>
           <p className="text-sm text-gray-600">
-            Token ID: {group.tokenId.toString()}
+            {isLoadingCount ? (
+              <span className="text-gray-400">Loading posts...</span>
+            ) : (
+              <span>{postCount?.toString() ?? '0'} {postCount === BigInt(1) ? 'post' : 'posts'}</span>
+            )}
           </p>
         </div>
         <button
