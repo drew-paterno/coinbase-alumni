@@ -68,10 +68,11 @@ contract GatedSocialEscrowTest is Test {
         escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
 
         // Verify group was added
-        (uint256 tokenId, string memory name, bool isActive) = escrow.groups(address(mockNft));
+        (uint256 tokenId, string memory name, bool isActive, address nftAddr) = escrow.groups(address(mockNft));
         assertEq(tokenId, TOKEN_ID);
         assertEq(name, GROUP_NAME);
         assertTrue(isActive);
+        assertEq(nftAddr, address(mockNft));
     }
 
     function test_AddGroup_RevertsIfNotProtocol() public {
@@ -102,9 +103,9 @@ contract GatedSocialEscrowTest is Test {
         vm.stopPrank();
 
         // Verify all groups
-        (uint256 tokenId1,, bool isActive1) = escrow.groups(address(mockNft));
-        (uint256 tokenId2,, bool isActive2) = escrow.groups(address(mockNft2));
-        (uint256 tokenId3,, bool isActive3) = escrow.groups(address(mockNft3));
+        (uint256 tokenId1,, bool isActive1,) = escrow.groups(address(mockNft));
+        (uint256 tokenId2,, bool isActive2,) = escrow.groups(address(mockNft2));
+        (uint256 tokenId3,, bool isActive3,) = escrow.groups(address(mockNft3));
 
         assertEq(tokenId1, 1);
         assertEq(tokenId2, 2);
@@ -130,7 +131,7 @@ contract GatedSocialEscrowTest is Test {
         escrow.removeGroup(address(mockNft));
 
         // Verify group is inactive
-        (,, bool isActive) = escrow.groups(address(mockNft));
+        (,, bool isActive,) = escrow.groups(address(mockNft));
         assertFalse(isActive);
     }
 
