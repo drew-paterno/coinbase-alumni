@@ -19,6 +19,7 @@
     "deploy": "npx vercel --yes --prod"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "latest",
     "@farcaster/miniapp-sdk": "^0.2.0",
     "@tanstack/react-query": "^5.90.2",
     "next": "15.5.9",

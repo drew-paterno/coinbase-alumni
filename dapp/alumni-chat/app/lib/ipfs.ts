@@ -13,44 +13,24 @@ export interface IPFSUploadResult {
 }
 
 /**
- * Upload post content to IPFS via Pinata
- * Requires NEXT_PUBLIC_PINATA_JWT environment variable
+ * Upload post content to IPFS via server-side API route
+ * This keeps the Pinata JWT secure on the server
  */
 export async function uploadToIPFS(content: PostContent): Promise<IPFSUploadResult> {
-  const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
-
-  if (!pinataJwt) {
-    throw new Error('NEXT_PUBLIC_PINATA_JWT environment variable is not set');
-  }
-
-  const data = JSON.stringify({
-    pinataContent: content,
-    pinataMetadata: {
-      name: `post-${content.timestamp}`,
-    },
-  });
-
-  const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+  const response = await fetch('/api/ipfs', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${pinataJwt}`,
     },
-    body: data,
+    body: JSON.stringify(content),
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to upload to IPFS: ${error}`);
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to upload to IPFS');
   }
 
-  const result = await response.json();
-  const cid = result.IpfsHash;
-
-  return {
-    cid,
-    url: `https://gateway.pinata.cloud/ipfs/${cid}`,
-  };
+  return response.json();
 }
 
 /**
