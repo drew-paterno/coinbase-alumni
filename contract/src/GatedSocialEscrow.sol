@@ -33,6 +33,7 @@ contract GatedSocialEscrow {
         uint256 tokenId;
         string name;
         bool isActive;
+        address membershipNft;
     }
 
     mapping(address => Post[]) public posts;
@@ -74,7 +75,8 @@ contract GatedSocialEscrow {
         groups[membershipNft] = Group({
             isActive: true,
             tokenId: membershipTokenId_,
-            name: groupName
+            name: groupName,
+            membershipNft: membershipNft
         });
         groupAddresses.push(membershipNft);
         // Note: posts[membershipNft] is already an empty array by default
