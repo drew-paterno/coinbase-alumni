@@ -83,8 +83,8 @@ export default function Home() {
 
           {!isLoading && !isError && groups && groups.length > 0 && (
             <div className="space-y-4">
-              {groups.map((group, index) => (
-                <GroupCard key={index} group={group} index={index} />
+              {groups.map((group) => (
+                <GroupCard key={group.membershipNft} group={group} />
               ))}
             </div>
           )}
@@ -101,53 +101,27 @@ export default function Home() {
   );
 }
 
-function GroupCard({ group, index }: { group: Group; index: number }) {
+function GroupCard({ group }: { group: Group }) {
   const router = useRouter();
 
   const handleViewClick = () => {
-    debugger
-    if (group.isActive) {
-      // Navigate to feed page with group index
-      router.push(`/feed/${index}`);
-    }
+    router.push(`/feed/${group.membershipNft}`);
   };
 
   return (
-    <div
-      className={`border rounded-xl p-5 transition-all hover:shadow-md ${
-        group.isActive
-          ? 'border-green-200 bg-green-50 hover:border-green-300'
-          : 'border-gray-200 bg-gray-50 opacity-60'
-      }`}
-    >
+    <div className="border border-green-200 bg-green-50 hover:border-green-300 rounded-xl p-5 transition-all hover:shadow-md">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {group.name || `Group #${index + 1}`}
-            </h3>
-            {group.isActive ? (
-              <span className="px-2 py-0.5 bg-green-200 text-green-800 text-xs font-medium rounded-full">
-                Active
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 bg-gray-300 text-gray-600 text-xs font-medium rounded-full">
-                Inactive
-              </span>
-            )}
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {group.name || 'Unnamed Group'}
+          </h3>
           <p className="text-sm text-gray-600">
             Token ID: {group.tokenId.toString()}
           </p>
         </div>
         <button
           onClick={handleViewClick}
-          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-            group.isActive
-              ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          disabled={!group.isActive}
+          className="px-4 py-2 rounded-lg font-medium text-sm transition-colors bg-indigo-600 hover:bg-indigo-700 text-white"
         >
           View
         </button>
