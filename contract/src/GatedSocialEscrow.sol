@@ -85,27 +85,27 @@ contract GatedSocialEscrow {
     }
 
     constructor(
-        address protocolRecipient_,
-        address submitter_,
-        uint256 postFeeWei_,
-        uint16 protocolBps_,
-        uint16 setupBpsOfEscrow_,
-        uint256 ackTimeoutSeconds_
+        address protocolRecipient_
+        // address submitter_,
+        // uint256 postFeeWei_,
+        // uint16 protocolBps_,
+        // uint16 setupBpsOfEscrow_,
+        // uint256 ackTimeoutSeconds_
     ) {
         require(protocolRecipient_ != address(0), "protocol=0");
-        require(submitter_ != address(0), "submitter=0");
-        require(protocolBps_ <= 10_000, "protocolBps");
-        require(setupBpsOfEscrow_ <= 10_000, "setupBps");
-        require(postFeeWei_ > 0, "fee=0");
+        // require(submitter_ != address(0), "submitter=0");
+        // require(protocolBps_ <= 10_000, "protocolBps");
+        // require(setupBpsOfEscrow_ <= 10_000, "setupBps");
+        // require(postFeeWei_ > 0, "fee=0");
 
-        protocolRecipient = protocolRecipient_;
-        submitter = submitter_;
+        // protocolRecipient = protocolRecipient_;
+        // submitter = submitter_;
 
-        postFeeWei = postFeeWei_;
-        protocolBps = protocolBps_;
-        setupBpsOfEscrow = setupBpsOfEscrow_;
+        // postFeeWei = postFeeWei_;
+        // protocolBps = protocolBps_;
+        // setupBpsOfEscrow = setupBpsOfEscrow_;
 
-        ackTimeout = ackTimeoutSeconds_;
+        // ackTimeout = ackTimeoutSeconds_;
     }
 
     // -- Add group to supported groups --
@@ -150,202 +150,206 @@ contract GatedSocialEscrow {
         return result;
     }
 
-    // --- Admin Functions ---
-    function setRecipients(address protocolRecipient_, address submitter_) external onlyProtocol {
-        require(protocolRecipient_ != address(0), "protocol=0");
-        require(submitter_ != address(0), "submitter=0");
-        protocolRecipient = protocolRecipient_;
-        submitter = submitter_;
+    function isMember(address membershipnft) external view returns (bool) {
+        return membership.balanceOf(msg.sender, groups[membershipnft].tokenId) > 0;
     }
 
-    function setEconomics(uint256 postFeeWei_, uint16 protocolBps_, uint16 setupBpsOfEscrow_) external onlyProtocol {
-        require(postFeeWei_ > 0, "fee=0");
-        require(protocolBps_ <= 10_000, "protocolBps");
-        require(setupBpsOfEscrow_ <= 10_000, "setupBps");
+    // // --- Admin Functions ---
+    // function setRecipients(address protocolRecipient_, address submitter_) external onlyProtocol {
+    //     require(protocolRecipient_ != address(0), "protocol=0");
+    //     require(submitter_ != address(0), "submitter=0");
+    //     protocolRecipient = protocolRecipient_;
+    //     submitter = submitter_;
+    // }
 
-        postFeeWei = postFeeWei_;
-        protocolBps = protocolBps_;
-        setupBpsOfEscrow = setupBpsOfEscrow_;
-    }
+    // function setEconomics(uint256 postFeeWei_, uint16 protocolBps_, uint16 setupBpsOfEscrow_) external onlyProtocol {
+    //     require(postFeeWei_ > 0, "fee=0");
+    //     require(protocolBps_ <= 10_000, "protocolBps");
+    //     require(setupBpsOfEscrow_ <= 10_000, "setupBps");
 
-    function setAckTimeout(uint256 ackTimeoutSeconds_) external onlyProtocol {
-        ackTimeout = ackTimeoutSeconds_;
-    }
+    //     postFeeWei = postFeeWei_;
+    //     protocolBps = protocolBps_;
+    //     setupBpsOfEscrow = setupBpsOfEscrow_;
+    // }
 
-    // --- Core Flow ---
+    // function setAckTimeout(uint256 ackTimeoutSeconds_) external onlyProtocol {
+    //     ackTimeout = ackTimeoutSeconds_;
+    // }
 
-    /**
-     * @notice Author creates a post by providing a CID and paying the fee.
-     * Only accessible by holders of the required ERC1155 token ID.
-     */
-    function createPost(string calldata cid, address membershipnft) external payable onlyMembers(membershipnft) returns (uint256 postId) {
-        require(msg.value == postFeeWei, "Wrong fee");
-        require(bytes(cid).length > 0 && bytes(cid).length < 128, "Bad CID len");
+    // // --- Core Flow ---
 
-        uint256 protocolCut = (msg.value * protocolBps) / 10_000;
-        uint256 escrow = msg.value - protocolCut;
+    // /**
+    //  * @notice Author creates a post by providing a CID and paying the fee.
+    //  * Only accessible by holders of the required ERC1155 token ID.
+    //  */
+    // function createPost(string calldata cid, address membershipnft) external payable onlyMembers(membershipnft) returns (uint256 postId) {
+    //     require(msg.value == postFeeWei, "Wrong fee");
+    //     require(bytes(cid).length > 0 && bytes(cid).length < 128, "Bad CID len");
 
-        if (protocolCut > 0) {
-            (bool okP, ) = protocolRecipient.call{value: protocolCut}("");
-            require(okP, "protocol pay fail");
-        }
+    //     uint256 protocolCut = (msg.value * protocolBps) / 10_000;
+    //     uint256 escrow = msg.value - protocolCut;
 
-        postId = nextPostId++;
-        Post storage p = posts[postId];
-        p.author = msg.sender;
-        p.cid = cid;
-        p.createdAt = uint64(block.timestamp);
-        p.status = Status.Pending;
-        p.escrowTotal = escrow;
+    //     if (protocolCut > 0) {
+    //         (bool okP, ) = protocolRecipient.call{value: protocolCut}("");
+    //         require(okP, "protocol pay fail");
+    //     }
 
-        emit PostCreated(postId, msg.sender, cid, escrow, block.timestamp);
-    }
+    //     postId = nextPostId++;
+    //     Post storage p = posts[postId];
+    //     p.author = msg.sender;
+    //     p.cid = cid;
+    //     p.createdAt = uint64(block.timestamp);
+    //     p.status = Status.Pending;
+    //     p.escrowTotal = escrow;
 
-    /**
-     * @notice Submitter triggers this once the content is pinned.
-     * Releases the setup fee and begins the streaming period.
-     */
-    function ackPinned(uint256 postId) external onlySubmitter {
-        Post storage p = posts[postId];
-        require(p.status == Status.Pending, "Not pending");
+    //     emit PostCreated(postId, msg.sender, cid, escrow, block.timestamp);
+    // }
 
-        if (ackTimeout > 0) {
-            require(block.timestamp <= uint256(p.createdAt) + ackTimeout, "ACK timeout");
-        }
+    // /**
+    //  * @notice Submitter triggers this once the content is pinned.
+    //  * Releases the setup fee and begins the streaming period.
+    //  */
+    // function ackPinned(uint256 postId) external onlySubmitter {
+    //     Post storage p = posts[postId];
+    //     require(p.status == Status.Pending, "Not pending");
 
-        p.ackedAt = uint64(block.timestamp);
-        p.status = Status.Active;
+    //     if (ackTimeout > 0) {
+    //         require(block.timestamp <= uint256(p.createdAt) + ackTimeout, "ACK timeout");
+    //     }
 
-        uint256 setupPay = (p.escrowTotal * setupBpsOfEscrow) / 10_000;
-        p.setupPaid = setupPay;
+    //     p.ackedAt = uint64(block.timestamp);
+    //     p.status = Status.Active;
 
-        if (setupPay > 0) {
-            (bool okS, ) = submitter.call{value: setupPay}("");
-            require(okS, "setup pay fail");
-        }
+    //     uint256 setupPay = (p.escrowTotal * setupBpsOfEscrow) / 10_000;
+    //     p.setupPaid = setupPay;
 
-        emit PostAcked(postId, msg.sender, setupPay, block.timestamp);
-    }
+    //     if (setupPay > 0) {
+    //         (bool okS, ) = submitter.call{value: setupPay}("");
+    //         require(okS, "setup pay fail");
+    //     }
 
-    /**
-     * @notice Releases all ETH currently vested in the linear stream.
-     */
-    function settle(uint256 postId) external {
-        Post storage p = posts[postId];
-        require(p.status == Status.Active, "Not active");
+    //     emit PostAcked(postId, msg.sender, setupPay, block.timestamp);
+    // }
 
-        uint256 payableNow = _streamPayableNow(p);
-        require(payableNow > 0, "Nothing to pay");
+    // /**
+    //  * @notice Releases all ETH currently vested in the linear stream.
+    //  */
+    // function settle(uint256 postId) external {
+    //     Post storage p = posts[postId];
+    //     require(p.status == Status.Active, "Not active");
 
-        p.streamPaid += payableNow;
+    //     uint256 payableNow = _streamPayableNow(p);
+    //     require(payableNow > 0, "Nothing to pay");
 
-        (bool ok, ) = submitter.call{value: payableNow}("");
-        require(ok, "stream pay fail");
+    //     p.streamPaid += payableNow;
 
-        if (p.setupPaid + p.streamPaid >= p.escrowTotal) {
-            p.status = Status.Completed;
-        }
+    //     (bool ok, ) = submitter.call{value: payableNow}("");
+    //     require(ok, "stream pay fail");
 
-        emit PostSettled(postId, submitter, payableNow, p.streamPaid);
-    }
+    //     if (p.setupPaid + p.streamPaid >= p.escrowTotal) {
+    //         p.status = Status.Completed;
+    //     }
 
-    /**
-     * @notice If the submitter fails to ACK in time, author reclaims escrow.
-     */
-    function refundUnacked(uint256 postId) external {
-        Post storage p = posts[postId];
-        require(p.status == Status.Pending, "Not pending");
-        require(msg.sender == p.author, "Not author");
-        require(ackTimeout > 0, "No timeout set");
-        require(block.timestamp > uint256(p.createdAt) + ackTimeout, "Too early");
+    //     emit PostSettled(postId, submitter, payableNow, p.streamPaid);
+    // }
 
-        p.status = Status.Refunded;
-        uint256 refund = p.escrowTotal;
-        p.escrowTotal = 0;
+    // /**
+    //  * @notice If the submitter fails to ACK in time, author reclaims escrow.
+    //  */
+    // function refundUnacked(uint256 postId) external {
+    //     Post storage p = posts[postId];
+    //     require(p.status == Status.Pending, "Not pending");
+    //     require(msg.sender == p.author, "Not author");
+    //     require(ackTimeout > 0, "No timeout set");
+    //     require(block.timestamp > uint256(p.createdAt) + ackTimeout, "Too early");
 
-        (bool ok, ) = p.author.call{value: refund}("");
-        require(ok, "refund fail");
+    //     p.status = Status.Refunded;
+    //     uint256 refund = p.escrowTotal;
+    //     p.escrowTotal = 0;
 
-        emit PostRefundedUnacked(postId, p.author, refund, block.timestamp);
-    }
+    //     (bool ok, ) = p.author.call{value: refund}("");
+    //     require(ok, "refund fail");
 
-    /**
-     * @notice Author cancels the service.
-     * Submitter keeps what has vested; Author reclaims the unvested remainder.
-     */
-    function removePost(uint256 postId) external {
-        Post storage p = posts[postId];
-        require(msg.sender == p.author, "Not author");
+    //     emit PostRefundedUnacked(postId, p.author, refund, block.timestamp);
+    // }
 
-        if (p.status == Status.Pending) {
-            p.status = Status.Removed;
-            p.removedAt = uint64(block.timestamp);
-            uint256 refundPending = p.escrowTotal;
-            p.escrowTotal = 0;
-            (bool okP, ) = p.author.call{value: refundPending}("");
-            require(okP, "refund pending fail");
-            emit PostRemoved(postId, p.author, refundPending, block.timestamp);
-            return;
-        }
+    // /**
+    //  * @notice Author cancels the service.
+    //  * Submitter keeps what has vested; Author reclaims the unvested remainder.
+    //  */
+    // function removePost(uint256 postId) external {
+    //     Post storage p = posts[postId];
+    //     require(msg.sender == p.author, "Not author");
 
-        require(p.status == Status.Active, "Not removable");
-        p.status = Status.Removed;
-        p.removedAt = uint64(block.timestamp);
+    //     if (p.status == Status.Pending) {
+    //         p.status = Status.Removed;
+    //         p.removedAt = uint64(block.timestamp);
+    //         uint256 refundPending = p.escrowTotal;
+    //         p.escrowTotal = 0;
+    //         (bool okP, ) = p.author.call{value: refundPending}("");
+    //         require(okP, "refund pending fail");
+    //         emit PostRemoved(postId, p.author, refundPending, block.timestamp);
+    //         return;
+    //     }
 
-        uint256 vestedStream = _streamVested(p);
-        uint256 totalVested = p.setupPaid + vestedStream;
+    //     require(p.status == Status.Active, "Not removable");
+    //     p.status = Status.Removed;
+    //     p.removedAt = uint64(block.timestamp);
 
-        uint256 refundable;
-        if (totalVested >= p.escrowTotal) {
-            refundable = 0;
-        } else {
-            refundable = p.escrowTotal - totalVested;
-        }
+    //     uint256 vestedStream = _streamVested(p);
+    //     uint256 totalVested = p.setupPaid + vestedStream;
 
-        uint256 bal = address(this).balance;
-        if (refundable > bal) refundable = bal;
+    //     uint256 refundable;
+    //     if (totalVested >= p.escrowTotal) {
+    //         refundable = 0;
+    //     } else {
+    //         refundable = p.escrowTotal - totalVested;
+    //     }
 
-        if (refundable > 0) {
-            (bool ok, ) = p.author.call{value: refundable}("");
-            require(ok, "refund fail");
-        }
+    //     uint256 bal = address(this).balance;
+    //     if (refundable > bal) refundable = bal;
 
-        emit PostRemoved(postId, p.author, refundable, block.timestamp);
-    }
+    //     if (refundable > 0) {
+    //         (bool ok, ) = p.author.call{value: refundable}("");
+    //         require(ok, "refund fail");
+    //     }
 
-    // --- View Helpers ---
-    function streamRemaining(uint256 postId) external view returns (uint256) {
-        Post storage p = posts[postId];
-        if (p.status != Status.Active) return 0;
-        uint256 vested = _streamVested(p);
-        uint256 streamTotal = p.escrowTotal - p.setupPaid;
-        if (vested >= streamTotal) return 0;
-        return streamTotal - vested;
-    }
+    //     emit PostRemoved(postId, p.author, refundable, block.timestamp);
+    // }
 
-    function streamPayableNow(uint256 postId) external view returns (uint256) {
-        Post storage p = posts[postId];
-        if (p.status != Status.Active) return 0;
-        return _streamPayableNow(p);
-    }
+    // // --- View Helpers ---
+    // function streamRemaining(uint256 postId) external view returns (uint256) {
+    //     Post storage p = posts[postId];
+    //     if (p.status != Status.Active) return 0;
+    //     uint256 vested = _streamVested(p);
+    //     uint256 streamTotal = p.escrowTotal - p.setupPaid;
+    //     if (vested >= streamTotal) return 0;
+    //     return streamTotal - vested;
+    // }
 
-    // --- Internal streaming math ---
-    function _streamVested(Post storage p) internal view returns (uint256) {
-        if (p.ackedAt == 0) return 0;
-        uint256 streamTotal = p.escrowTotal - p.setupPaid;
-        if (streamTotal == 0) return 0;
+    // function streamPayableNow(uint256 postId) external view returns (uint256) {
+    //     Post storage p = posts[postId];
+    //     if (p.status != Status.Active) return 0;
+    //     return _streamPayableNow(p);
+    // }
 
-        uint256 elapsed = block.timestamp - uint256(p.ackedAt);
-        if (elapsed >= STREAM_DURATION) return streamTotal;
+    // // --- Internal streaming math ---
+    // function _streamVested(Post storage p) internal view returns (uint256) {
+    //     if (p.ackedAt == 0) return 0;
+    //     uint256 streamTotal = p.escrowTotal - p.setupPaid;
+    //     if (streamTotal == 0) return 0;
 
-        return (streamTotal * elapsed) / STREAM_DURATION;
-    }
+    //     uint256 elapsed = block.timestamp - uint256(p.ackedAt);
+    //     if (elapsed >= STREAM_DURATION) return streamTotal;
 
-    function _streamPayableNow(Post storage p) internal view returns (uint256) {
-        uint256 vested = _streamVested(p);
-        if (vested <= p.streamPaid) return 0;
-        return vested - p.streamPaid;
-    }
+    //     return (streamTotal * elapsed) / STREAM_DURATION;
+    // }
 
-    receive() external payable {}
+    // function _streamPayableNow(Post storage p) internal view returns (uint256) {
+    //     uint256 vested = _streamVested(p);
+    //     if (vested <= p.streamPaid) return 0;
+    //     return vested - p.streamPaid;
+    // }
+
+    // receive() external payable {}
 }

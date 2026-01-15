@@ -15,7 +15,9 @@ contract Deploy is Script {
     function run() public {
         vm.startBroadcast();
 
-        // new GatedSocialEscrow();
+        address protocolRecipient = 0x12eAC257a267BA0B70360b114cf9c1154Bf139D4;
+
+        new GatedSocialEscrow(protocolRecipient);
 
         vm.stopBroadcast();
     }
