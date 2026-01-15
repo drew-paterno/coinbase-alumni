@@ -1,7 +1,6 @@
 import { type Address } from 'viem'
 
-// TODO: Update this after deploying your contract
-export const gatedSocialEscrowAddress: Address = '0x0000000000000000000000000000000000000000'
+export const gatedSocialEscrowAddress: Address = '0x6eFc4882d01B89e1C439C50b8eb23f0a0ACd00A0'
 
 // Post status enum matching the contract
 export enum PostStatus {
@@ -38,28 +37,15 @@ export const GatedSocialEscrowAbi = [
     type: 'constructor',
     inputs: [
       { name: 'protocolRecipient_', type: 'address', internalType: 'address' },
-      { name: 'submitter_', type: 'address', internalType: 'address' },
-      { name: 'postFeeWei_', type: 'uint256', internalType: 'uint256' },
-      { name: 'protocolBps_', type: 'uint16', internalType: 'uint16' },
-      { name: 'setupBpsOfEscrow_', type: 'uint16', internalType: 'uint16' },
-      { name: 'ackTimeoutSeconds_', type: 'uint256', internalType: 'uint256' },
     ],
     stateMutability: 'nonpayable',
   },
-  { type: 'receive', stateMutability: 'payable' },
   {
     type: 'function',
     name: 'STREAM_DURATION',
     inputs: [],
     outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'ackPinned',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
   },
   {
     type: 'function',
@@ -78,16 +64,6 @@ export const GatedSocialEscrowAbi = [
     ],
     outputs: [],
     stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'createPost',
-    inputs: [
-      { name: 'cid', type: 'string', internalType: 'string' },
-      { name: 'membershipnft', type: 'address', internalType: 'address' },
-    ],
-    outputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'payable',
   },
   {
     type: 'function',
@@ -126,6 +102,13 @@ export const GatedSocialEscrowAbi = [
       { name: 'name', type: 'string', internalType: 'string' },
       { name: 'isActive', type: 'bool', internalType: 'bool' },
     ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'isMember',
+    inputs: [{ name: 'membershipnft', type: 'address', internalType: 'address' }],
+    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
     stateMutability: 'view',
   },
   {
@@ -189,57 +172,8 @@ export const GatedSocialEscrowAbi = [
   },
   {
     type: 'function',
-    name: 'refundUnacked',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
     name: 'removeGroup',
     inputs: [{ name: 'membershipNft', type: 'address', internalType: 'address' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'removePost',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'setAckTimeout',
-    inputs: [{ name: 'ackTimeoutSeconds_', type: 'uint256', internalType: 'uint256' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'setEconomics',
-    inputs: [
-      { name: 'postFeeWei_', type: 'uint256', internalType: 'uint256' },
-      { name: 'protocolBps_', type: 'uint16', internalType: 'uint16' },
-      { name: 'setupBpsOfEscrow_', type: 'uint16', internalType: 'uint16' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'setRecipients',
-    inputs: [
-      { name: 'protocolRecipient_', type: 'address', internalType: 'address' },
-      { name: 'submitter_', type: 'address', internalType: 'address' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'settle',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -248,20 +182,6 @@ export const GatedSocialEscrowAbi = [
     name: 'setupBpsOfEscrow',
     inputs: [],
     outputs: [{ name: '', type: 'uint16', internalType: 'uint16' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'streamPayableNow',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'streamRemaining',
-    inputs: [{ name: 'postId', type: 'uint256', internalType: 'uint256' }],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'view',
   },
   {
