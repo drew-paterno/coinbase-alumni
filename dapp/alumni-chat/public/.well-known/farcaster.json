@@ -9,19 +9,13 @@
   },
   "miniapp": {
     "version": "1",
-    "name": "Base Mini App Starter",
-    "homeUrl": "https://starterminiapp.com",
-    "iconUrl": "https://starterminiapp.com/icon.png",
-    "splashImageUrl": "https://starterminiapp.com/splash.png",
-    "splashBackgroundColor": "#000000",
-    "heroImageUrl": "https://starterminiapp.com/hero.png",
-    "subtitle": "Build your Base Mini App",
-    "description": "Clone this starter template to build your own Base Mini App. Customize this description to explain what your app does (max 170 chars).",
-    "primaryCategory": "developer-tools",
-    "tags": ["starter", "template", "miniapp"],
-    "ogTitle": "Base Mini App Starter",
-    "ogDescription": "Clone and customize this template to build your Base Mini App",
-    "ogImageUrl": "https://starterminiapp.com/hero.png"
+    "name": "NFT Alumni",
+    "iconUrl": "https://coinbase-alumni.vercel.app/icon.png",
+    "homeUrl": "https://coinbase-alumni.vercel.app",
+    "splashImageUrl": "https://coinbase-alumni.vercel.app/splash.png",
+    "splashBackgroundColor": "#0000FF",
+    "heroImageUrl": "https://coinbase-alumni.vercel.app/hero.png",
+    "tagline": "Use your NFT to access an exclusive community"
   }
 }
 
