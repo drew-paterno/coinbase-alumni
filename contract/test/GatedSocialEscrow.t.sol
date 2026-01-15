@@ -408,6 +408,54 @@ contract GatedSocialEscrowTest is Test {
         assertEq(posts.length, 0);
     }
 
+    // ============ getGroupPostCount Tests ============
+
+    function test_GetGroupPostCount_ReturnsZeroForNewGroup() public {
+        vm.prank(protocolRecipient);
+        escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
+
+        uint256 count = escrow.getGroupPostCount(address(mockNft));
+        assertEq(count, 0);
+    }
+
+    function test_GetGroupPostCount_ReturnsZeroForNonExistentGroup() public view {
+        uint256 count = escrow.getGroupPostCount(address(mockNft));
+        assertEq(count, 0);
+    }
+
+    function test_GetGroupPostCount_ReturnsCorrectCount() public {
+        vm.prank(protocolRecipient);
+        escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
+
+        vm.startPrank(author);
+        escrow.createPost("QmCid1", address(mockNft));
+        escrow.createPost("QmCid2", address(mockNft));
+        escrow.createPost("QmCid3", address(mockNft));
+        vm.stopPrank();
+
+        uint256 count = escrow.getGroupPostCount(address(mockNft));
+        assertEq(count, 3);
+    }
+
+    function test_GetGroupPostCount_IsolatedByGroup() public {
+        MockERC1155 mockNft2 = new MockERC1155();
+        mockNft2.setBalance(author, 2, 1);
+
+        vm.startPrank(protocolRecipient);
+        escrow.addGroup(GROUP_NAME, address(mockNft), TOKEN_ID);
+        escrow.addGroup("Group 2", address(mockNft2), 2);
+        vm.stopPrank();
+
+        vm.startPrank(author);
+        escrow.createPost("QmCid1", address(mockNft));
+        escrow.createPost("QmCid2", address(mockNft));
+        escrow.createPost("QmCid3", address(mockNft2));
+        vm.stopPrank();
+
+        assertEq(escrow.getGroupPostCount(address(mockNft)), 2);
+        assertEq(escrow.getGroupPostCount(address(mockNft2)), 1);
+    }
+
     // ============ Helper Functions ============
 
     function _addMultipleGroups(uint256 count) internal {
