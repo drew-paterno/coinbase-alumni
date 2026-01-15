@@ -115,6 +115,9 @@ function GroupCard({ group }: { group: Group }) {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {group.name || 'Unnamed Group'}
           </h3>
+          <p className="text-sm text-gray-600 font-mono">
+            NFT: {group.membershipNft.slice(0, 6)}...{group.membershipNft.slice(-4)}
+          </p>
           <p className="text-sm text-gray-600">
             Token ID: {group.tokenId.toString()}
           </p>

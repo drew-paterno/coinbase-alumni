@@ -1,7 +1,7 @@
 import { type Address } from "viem";
 
 export const gatedSocialEscrowAddress: Address =
-  "0xa67345d88F8e02cF38aB60730280CB001047661E";
+  "0x52aB510bc6502Bb4300C16C8D0C6F66A43FC6C4C";
 
 // Post status enum matching the contract
 export enum PostStatus {
@@ -124,6 +124,15 @@ export const GatedSocialEscrowAbi = [
   },
   {
     inputs: [
+      { internalType: "address", name: "membershipnft", type: "address" },
+    ],
+    name: "getGroupPostCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
       { internalType: "uint256", name: "offset", type: "uint256" },
       { internalType: "uint256", name: "limit", type: "uint256" },
     ],
@@ -191,6 +200,7 @@ export const GatedSocialEscrowAbi = [
   {
     inputs: [
       { internalType: "address", name: "membershipNft", type: "address" },
+      { internalType: "address", name: "user", type: "address" },
     ],
     name: "isMember",
     outputs: [{ internalType: "bool", name: "", type: "bool" }],

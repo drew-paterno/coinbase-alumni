@@ -15,6 +15,7 @@ import { uploadToIPFS, fetchFromIPFS, type PostContent } from '../../lib/ipfs';
 export default function FeedPage() {
   const params = useParams();
   const router = useRouter();
+  const { address } = useAccount();
   const membershipNft = params.membershipNft as `0x${string}`;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +28,17 @@ export default function FeedPage() {
     args: [membershipNft],
   });
 
+  // Check if current user is a member
+  const { data: isMember, isLoading: isLoadingMember } = useReadContract({
+    abi: GatedSocialEscrowAbi,
+    address: gatedSocialEscrowAddress,
+    functionName: 'isMember',
+    args: [membershipNft, address!],
+    query: {
+      enabled: !!address,
+    },
+  });
+
   // Fetch posts from the contract
   const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useReadContract({
     abi: GatedSocialEscrowAbi,
@@ -35,7 +47,7 @@ export default function FeedPage() {
     args: [membershipNft],
   });
 
-  const isLoading = isLoadingGroup || isLoadingPosts;
+  const isLoading = isLoadingGroup || isLoadingPosts || isLoadingMember;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,6 +87,37 @@ export default function FeedPage() {
         </div>
       </div>
 
+      {/* Read-only banner for non-members */}
+      {!isLoading && !isMember && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+            <svg
+              className="w-5 h-5 text-amber-600 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+            <p className="text-sm text-amber-800">
+              <span className="font-medium">Read-only mode.</span>{' '}
+              You need to hold the membership NFT to post in this group.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Posts Feed */}
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Loading state */}
@@ -113,26 +156,28 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-20"
-        aria-label="Create new post"
-      >
-        <svg
-          className="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* Floating Action Button - only shown to members */}
+      {isMember && (
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-20"
+          aria-label="Create new post"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </button>
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      )}
 
       {isModalOpen && (
         <CreatePostModal
