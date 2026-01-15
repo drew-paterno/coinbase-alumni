@@ -46,8 +46,16 @@ contract GatedSocialEscrow {
         uint256 streamPaid;      // amount paid so far from streaming
     }
 
+    struct Group {
+        uint256 tokenId;
+        string name;
+        bool isActive;
+    }
+
     uint256 public nextPostId = 1;
     mapping(uint256 => Post) public posts;
+    mapping(address => Group) public groups;
+    address[] public groupAddresses;
 
     // --- Events ---
     event PostCreated(uint256 indexed postId, address indexed author, string cid, uint256 escrowTotal, uint256 createdAt);
@@ -55,11 +63,14 @@ contract GatedSocialEscrow {
     event PostSettled(uint256 indexed postId, address indexed submitter, uint256 paid, uint256 totalStreamPaid);
     event PostRemoved(uint256 indexed postId, address indexed author, uint256 refund, uint256 removedAt);
     event PostRefundedUnacked(uint256 indexed postId, address indexed author, uint256 refund, uint256 refundedAt);
+    event GroupAdded(address indexed membershipNft, uint256 indexed tokenId, string groupName);
+    event GroupRemoved(address indexed membershipNft);
 
     // --- Modifiers ---
-    modifier onlyMembers() {
+    modifier onlyMembers(address membershipnft) {
         // Updated for ERC1155 logic
-        require(membership.balanceOf(msg.sender, membershipTokenId) > 0, "Not a member of specific token ID");
+        require(groups[membershipnft].isActive == true, "group does not exist or is inactive");
+        require(membership.balanceOf(msg.sender, groups[membershipnft].tokenId) > 0, "Not a member of specific token ID");
         _;
     }
 
@@ -74,8 +85,6 @@ contract GatedSocialEscrow {
     }
 
     constructor(
-        address membershipNft,
-        uint256 membershipTokenId_,
         address protocolRecipient_,
         address submitter_,
         uint256 postFeeWei_,
@@ -83,15 +92,11 @@ contract GatedSocialEscrow {
         uint16 setupBpsOfEscrow_,
         uint256 ackTimeoutSeconds_
     ) {
-        require(membershipNft != address(0), "membership=0");
         require(protocolRecipient_ != address(0), "protocol=0");
         require(submitter_ != address(0), "submitter=0");
         require(protocolBps_ <= 10_000, "protocolBps");
         require(setupBpsOfEscrow_ <= 10_000, "setupBps");
         require(postFeeWei_ > 0, "fee=0");
-
-        membership = IERC1155(membershipNft);
-        membershipTokenId = membershipTokenId_;
 
         protocolRecipient = protocolRecipient_;
         submitter = submitter_;
@@ -101,6 +106,48 @@ contract GatedSocialEscrow {
         setupBpsOfEscrow = setupBpsOfEscrow_;
 
         ackTimeout = ackTimeoutSeconds_;
+    }
+
+    // -- Add group to supported groups --
+    function addGroup(string calldata groupName, address membershipNft, uint256 membershipTokenId_) external onlyProtocol {
+        require(groups[membershipNft].isActive == false, "group already exists");
+        groups[membershipNft] = Group({
+            isActive: true,
+            tokenId: membershipTokenId_,
+            name: groupName
+        });
+        groupAddresses.push(membershipNft);
+        emit GroupAdded(membershipNft, membershipTokenId_, groupName);
+    }
+
+    // --- Remove Group from supported groups ---
+    function removeGroup(address membershipNft) external onlyProtocol {
+        require(groups[membershipNft].isActive == true, "group does not exist or is inactive");
+        groups[membershipNft].isActive = false;
+        emit GroupRemoved(membershipNft);
+    }
+
+    function getGroups(uint256 offset, uint256 limit) external view returns (Group[] memory) {
+        uint256 total = groupAddresses.length;
+        
+        // Return empty if offset is past the end
+        if (offset >= total) {
+            return new Group[](0);
+        }
+        
+        // Calculate actual count to return
+        uint256 end = offset + limit;
+        if (end > total) {
+            end = total;
+        }
+        uint256 count = end - offset;
+        
+        // Build result array
+        Group[] memory result = new Group[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = groups[groupAddresses[offset + i]];
+        }
+        return result;
     }
 
     // --- Admin Functions ---
@@ -131,7 +178,7 @@ contract GatedSocialEscrow {
      * @notice Author creates a post by providing a CID and paying the fee.
      * Only accessible by holders of the required ERC1155 token ID.
      */
-    function createPost(string calldata cid) external payable onlyMembers returns (uint256 postId) {
+    function createPost(string calldata cid, address membershipnft) external payable onlyMembers(membershipnft) returns (uint256 postId) {
         require(msg.value == postFeeWei, "Wrong fee");
         require(bytes(cid).length > 0 && bytes(cid).length < 128, "Bad CID len");
 
