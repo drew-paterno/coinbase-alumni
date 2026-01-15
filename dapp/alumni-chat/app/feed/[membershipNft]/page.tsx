@@ -134,13 +134,13 @@ export default function FeedPage() {
         </svg>
       </button>
 
-      {/* Create Post Modal */}
-      <CreatePostModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        membershipNft={membershipNft}
-        onPostCreated={() => refetchPosts()}
-      />
+      {isModalOpen && (
+        <CreatePostModal
+          onClose={() => setIsModalOpen(false)}
+          membershipNft={membershipNft}
+          onPostCreated={() => refetchPosts()}
+        />
+      )}
     </div>
   );
 }
@@ -233,13 +233,12 @@ function IPFSContent({ cid }: { cid: string }) {
 }
 
 interface CreatePostModalProps {
-  isOpen: boolean;
   onClose: () => void;
   membershipNft: `0x${string}`;
   onPostCreated: () => void;
 }
 
-function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: CreatePostModalProps) {
+function CreatePostModal({ onClose, membershipNft, onPostCreated }: CreatePostModalProps) {
   const [postText, setPostText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedCid, setUploadedCid] = useState<string | null>(null);
@@ -273,6 +272,7 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
     if (writeError) {
       setError(writeError.message);
       setStatus('');
+      setIsUploading(false);
     }
   }, [writeError]);
 
@@ -301,7 +301,6 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
       console.log('Uploaded to IPFS:', cid);
 
       setUploadedCid(cid);
-      setIsUploading(false);
       setStatus('Submitting to blockchain...');
 
       // Step 2: Call smart contract with CID
@@ -318,8 +317,6 @@ function CreatePostModal({ isOpen, onClose, membershipNft, onPostCreated }: Crea
       setIsUploading(false);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
